@@ -1,5 +1,8 @@
 from flask import *
-from flask.ext.login import LoginManager, login_required, current_user, logout_user, login_user
+#from flask.ext.login import LoginManager, login_required, current_user, logout_user, login_user -- OLD
+from flask_login import LoginManager, current_user, login_user, logout_user #UPDATED
+from flask_login.utils import login_required #UPDATED
+from flask_login.login_manager import LoginManager #UPDATED
 import datetime
 from app import app
 from database import *
@@ -24,7 +27,6 @@ def load_user(userid):
 
 
 #VIEWS
-
 @app.route('/')
 def index():
 	subforums = Subforum.query.filter(Subforum.parent_id == None).order_by(Subforum.id)

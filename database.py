@@ -1,11 +1,14 @@
 from app import app
-from flask.ext.login import UserMixin
-from flask.ext.sqlalchemy import SQLAlchemy
+#from flask.ext.login import UserMixin
+from flask_login import UserMixin
+#from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 import re
 import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy.dialects.mysql import LONGTEXT
+
 db = SQLAlchemy(app)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 password_regex = re.compile("^[a-zA-Z0-9!@#%&]{6,40}$")
 username_regex = re.compile("^[a-zA-Z0-9!@#%&]{4,40}$")
 #Account checks
