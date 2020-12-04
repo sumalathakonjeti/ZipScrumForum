@@ -39,6 +39,9 @@ def subforum():
 	if not subforum:
 		return error("That subforum does not exist!")
 	posts = Post.query.filter(Post.subforum_id == subforum_id).order_by(Post.id.desc()).limit(50)
+	#favourites = Tags.query.filter(Tags.user_id == current_user.id).order_by(Tags.tag_id.desc()).limit(10)
+	#if subforum.id == 7:
+	#	return render_template("favourites.html", favourites=favourites, post=posts)
 	if not subforum.path:
 		subforum.path = generateLinkPath(subforum.id)
 
@@ -166,6 +169,16 @@ def action_createaccount():
 	db.session.commit()
 	login_user(user)
 	return redirect("/")
+
+@app.route('/tags')
+def tag_display():
+	favourites = Tags.query.filter(Tags.user_id == current_user.id).order_by(Tags.tag_id.desc()).limit(10)
+	#posts = Post.query.filter(Post.id == favourites.tag_id).all()
+	#if not favorites:
+	#	return error("Favorites do not exist!")
+	#if not post.subforum.path:
+	#	subforum.path = generateLinkPath(post.subforum.id)
+	return render_template("favourites.html", favourites=favourites, user=current_user)
 
 def error(errormessage):
 	return "<b style=\"color: red;\">" + errormessage + "</b>"

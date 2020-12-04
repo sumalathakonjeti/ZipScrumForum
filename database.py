@@ -40,6 +40,7 @@ class User(UserMixin, db.Model):
 	admin = db.Column(db.Boolean, default=False, unique=True)
 	posts = db.relationship("Post", backref="user")
 	comments = db.relationship("Comment", backref="user")
+	tags = db.relationship("Tags", backref="user")
 
 	def __init__(self, email, username, password):
 		self.email = email
@@ -55,6 +56,7 @@ class Post(db.Model):
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	subforum_id = db.Column(db.Integer, db.ForeignKey('subforum.id'))
 	postdate = db.Column(db.DateTime)
+	tags = db.relationship("Tags", backref="post")
 
 	#cache stuff
 	lastcheck = None
@@ -136,3 +138,9 @@ class Comment(db.Model):
 		else:
 			self.savedresponce =  "Just a moment ago!"
 		return self.savedresponce
+
+class Tags(db.Model):
+	tag_id = db.Column(db.Integer, primary_key=True)
+	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+	type = db.Column(db.Text)
+	post_info = db.Column(db.Integer, db.ForeignKey('post.id'))
