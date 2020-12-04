@@ -39,9 +39,6 @@ def subforum():
 	if not subforum:
 		return error("That subforum does not exist!")
 	posts = Post.query.filter(Post.subforum_id == subforum_id).order_by(Post.id.desc()).limit(50)
-	#favourites = Tags.query.filter(Tags.user_id == current_user.id).order_by(Tags.tag_id.desc()).limit(10)
-	#if subforum.id == 7:
-	#	return render_template("favourites.html", favourites=favourites, post=posts)
 	if not subforum.path:
 		subforum.path = generateLinkPath(subforum.id)
 
@@ -172,17 +169,17 @@ def action_createaccount():
 
 @app.route('/tags')
 def tag_display():
-	fav_post =[]
-	favourites = Tags.query.filter(Tags.user_id == current_user.id).order_by(Tags.tag_id.desc()).limit(10)
-	for fav in favourites:
-		fav_post.append(fav.post_info)
-	posts = Post.query.filter(Post.id.in_(fav_post))
-	#posts = Post.query.filter(Post.id == favourites.tag_id).all()
-	#if not favorites:
-	#	return error("Favorites do not exist!")
-	#if not post.subforum.path:
-	#	subforum.path = generateLinkPath(post.subforum.id)
-	return render_template("favourites.html", user=current_user, posts=posts)
+	fav_post = []
+	save_post = []
+	tags = Tags.query.filter(Tags.user_id == current_user.id).order_by(Tags.tag_id.desc()).limit(10)
+	for tag in tags:
+		if tag.type == 'favourites':
+			fav_post.append(tag.post_info)
+		elif tag.type == 'saved':
+			save_post.append(tag.post_info)
+	posts_fav = Post.query.filter(Post.id.in_(fav_post))
+	posts_save = Post.query.filter(Post.id.in_(save_post))
+	return render_template("favourites.html", user=current_user, posts_f=posts_fav, posts_s=posts_save)
 
 def error(errormessage):
 	return "<b style=\"color: red;\">" + errormessage + "</b>"
