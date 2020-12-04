@@ -6,14 +6,21 @@
       <tr> Favourites </tr>
     </div>
 </div>
-{% for favourite in favourites %}
+
+
+{% for post in posts %}
+
 	<div class="actualpost">
 		<div class="actualposttitle">
-			<a href="/tags">{{favourite.post_info}}</a>
+			<a href="/viewpost?post={{ post.id }}">{{post.title}}</a>
 
+			<div class="posttime">
+				{{ post.content }}
+			</div>
 			<div class="posttime">
 				{{ user.username }}
 			</div>
+
 		</div>
 
 	</div>

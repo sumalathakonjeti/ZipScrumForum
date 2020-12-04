@@ -172,13 +172,17 @@ def action_createaccount():
 
 @app.route('/tags')
 def tag_display():
+	fav_post =[]
 	favourites = Tags.query.filter(Tags.user_id == current_user.id).order_by(Tags.tag_id.desc()).limit(10)
+	for fav in favourites:
+		fav_post.append(fav.post_info)
+	posts = Post.query.filter(Post.id.in_(fav_post))
 	#posts = Post.query.filter(Post.id == favourites.tag_id).all()
 	#if not favorites:
 	#	return error("Favorites do not exist!")
 	#if not post.subforum.path:
 	#	subforum.path = generateLinkPath(post.subforum.id)
-	return render_template("favourites.html", favourites=favourites, user=current_user)
+	return render_template("favourites.html", user=current_user, posts=posts)
 
 def error(errormessage):
 	return "<b style=\"color: red;\">" + errormessage + "</b>"
