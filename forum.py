@@ -10,6 +10,10 @@ import config
 import os
 from setup import *
 import setup
+from flask_wtf.form import FlaskForm
+from wtforms.fields.core import StringField
+from wtforms.fields.simple import SubmitField
+from sqlalchemy import or_, join
 
 #SETUP
 app.config.from_object(config)
@@ -189,6 +193,30 @@ def generateLinkPath(subforumid):
 db.create_all()
 if not Subforum.query.all():
 		init_site()
+
+@app.route('/search', methods=['POST','GET'])
+def search():
+	search = SearchForm(request.form)
+	if request.method == "POST":
+		return search_results(search)
+
+	return render_template('search.html', form=search)
+
+@app.route('/results')
+def search_results(search):
+	post = search.data['search']
+	post = Post.query.outerjoin(Post.comments).filter(or_(Post.title.ilike(f'%{post}%'),
+														  Post.content.ilike(f'%{post}%'),
+														  Comment.content.ilike(f'%{post}%')))
+	print(post)
+	# post = Post.query.filter(or_(Post.title.ilike(f'%{post}%'), Post.content.ilike(f'%{post}%')))
+
+	return render_template("results.html", form=post)
+
+class SearchForm(FlaskForm):
+   search = StringField('Search')
+   submit = SubmitField('Submit')
+
 if __name__ == "__main__":
 	#setup.setup()
 	#port = int(os.environ["PORT"])
