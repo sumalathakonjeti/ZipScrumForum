@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block body %}
+<ul class=messages>
+  {% for msg in messages %}
+    <li><h2>{{ msg.sender|safe }} ({{ msg.postdate.strftime('%Y-%m-%d %H:%M') }})</h2>
+    <p>{{ msg.message|safe }}</p>
+  {% else %}
+    <li><em>Messages?</em>
+  {% endfor %}
+</ul>
+{% endblock %}
+
+
