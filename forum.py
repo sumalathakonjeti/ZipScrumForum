@@ -189,6 +189,8 @@ def generateLinkPath(subforumid):
     return link
 
 
+#messqging
+
 @login_required
 @app.route('/send', methods=['GET', 'POST'])
 def send_message():
@@ -205,25 +207,27 @@ def send_message():
         return render_template('layout.html')
 
 
+
 @login_required
 @app.route('/show')
 def show_messages():
     """show all messages"""
-    messages = Message.query.filter(Message.user_id == current_user.id).order_by(
-        Message.id.desc()
-    )
-    print(messages)
+    messages = Message.query.filter(Message.sender == current_user.username).order_by(
+        Message.id.desc())
+    # print(messages)
     return render_template('messages.html', messages=messages)
 
+
 messages = []  # list of Message(s)
+
 
 @login_required
 @app.route('/add_message', methods=['POST', 'GET'])
 def add_message(sender, m):
-
     global messages
     if m:
         msg = Message(sender, m, datetime.datetime.now())
+        print(msg)
         messages.append(msg)
         if len(messages) > MAX_MESSAGES:
             messages = messages[-MAX_MESSAGES:]
@@ -236,7 +240,6 @@ def add_message(sender, m):
 db.create_all()
 if not Subforum.query.all():
     init_site()
-
 
 if __name__ == "__main__":
     # setup.setup()

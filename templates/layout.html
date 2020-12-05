@@ -31,11 +31,12 @@
 {% endif %}
 	<input class="content">
 		{% block body %}{% endblock %}
-	    {% if current_user.is_authenticated %}
+   	    {% if current_user.is_authenticated %}
 	    <div class="message">
 			{% include 'master.html' %}
 		</div>
 	    {% endif %}
+
 	</div>
 </div>
 </body>

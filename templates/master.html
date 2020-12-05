@@ -1,6 +1,37 @@
-<div class="pages" >
-		<h1>Messages</h1>
-		<div>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"/>
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet"/>
+<style>
+.panel-title {
+  position: relative;
+}
+
+.panel-title::after {
+	content: "\f107";
+	color: #333;
+	top: -2px;
+	right: 0px;
+	position: absolute;
+    font-family: "FontAwesome"
+}
+
+.panel-title[aria-expanded="true"]::after {
+	content: "\f106";
+}
+</style>
+<div class="panel-group" id="accordion">
+    <!-- First Panel -->
+    <div class="panel panel-default">
+	<div class="panel-heading">
+             <h4 class="panel-title" data-toggle="collapse" data-parent="accordion" href="#msg">
+                 Messaging ...
+             </h4>
+        </div>
+
+		<div id="msg" class="panel-body">
 			<ul>
 				<li>
 					<a href="{{ url_for('send_message') }}">Send Message</a>
@@ -19,6 +50,6 @@
 				</li>
 			</ul>
 		</div>
-	</div>
 
+</div></div>
 
