@@ -9,5 +9,3 @@ username = os.getenv('MYSQL_user')
 pswd = os.getenv('MYSQL_pw')
 #SQLALCHEMY_DATABASE_URI = "sqlite:////tmp/database.db";
 SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://' + username + ":" + pswd + '@localhost/posts'
-
-
