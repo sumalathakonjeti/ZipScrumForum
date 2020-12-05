@@ -71,6 +71,20 @@ def viewpost():
 	comments = Comment.query.filter(Comment.post_id == postid).order_by(Comment.id.desc()) # no need for scalability now
 	return render_template("viewpost.html", post=post, path=subforum.path, comments=comments)
 
+@app.route('/tags')
+def tag_display():
+	fav_post = []
+	save_post = []
+	tags = Tags.query.filter(Tags.user_id == current_user.id).order_by(Tags.tag_id.desc()).limit(10)
+	for tag in tags:
+		if tag.type == 'favourites':
+			fav_post.append(tag.post_info)
+		elif tag.type == 'saved':
+			save_post.append(tag.post_info)
+	posts_fav = Post.query.filter(Post.id.in_(fav_post))
+	posts_save = Post.query.filter(Post.id.in_(save_post))
+	return render_template("favourites.html", user=current_user, posts_f=posts_fav, posts_s=posts_save)
+
 #ACTIONS
 
 @login_required
@@ -166,6 +180,23 @@ def action_createaccount():
 	db.session.commit()
 	login_user(user)
 	return redirect("/")
+
+@login_required
+@app.route('/action_tag', methods=['GET', 'POST'])
+def action_tag():
+	post_id = int(request.args.get("post"))
+	print('post_id:' + str(post_id))
+	user = current_user
+	post = Post.query.filter(Post.id == post_id).first()
+	if not post:
+		return error("That post does not exist!")
+	type = 'favourites'
+	tag = Tags(type, post_id)
+	user.tags.append(tag)
+	db.session.commit()
+	return redirect("/tags")
+
+
 
 def error(errormessage):
 	return "<b style=\"color: red;\">" + errormessage + "</b>"
