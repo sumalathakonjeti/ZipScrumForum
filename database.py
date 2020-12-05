@@ -144,3 +144,7 @@ class Tags(db.Model):
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 	type = db.Column(db.Text)
 	post_info = db.Column(db.Integer, db.ForeignKey('post.id'))
+
+	def __init__(self, type, post_info):
+		self.type = type
+		self.post_info = post_info
