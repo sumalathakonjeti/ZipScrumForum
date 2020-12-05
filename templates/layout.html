@@ -5,11 +5,13 @@
 	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css')}}">
 	<title>{{ config.SITE_NAME }}</title>
 </head>
-<body>
+<body style="background-color:#E5E7E9">
+
 <div class="page">
 	<div class="header">
 		{% include 'header.html' %}
 	</div>
+
 	{% if errors %}
 	<div class="errors">
 	{% for error in errors %}
@@ -22,6 +24,12 @@
 {% endif %}
 	<div class="content">
 		{% block body %}{% endblock %}
+   	    {% if current_user.is_authenticated %}
+	    <div class="message">
+			{% include 'master.html' %}
+		</div>
+	    {% endif %}
+
 	</div>
 </div>
 </body>
