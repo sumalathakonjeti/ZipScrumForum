@@ -51,6 +51,12 @@
 			<div class="date">
 			{{ post.get_time_string() }}
 			</div>
+
+			{% if current_user.is_authenticated %}
+			<form action="/action_tag?post={{ post.id }}" method="POST">
+				<input type="submit" id="favorite" value="Favorite">
+			</form>
+			{% endif %}
 		</div>
 	</div>
 	{% endfor %}

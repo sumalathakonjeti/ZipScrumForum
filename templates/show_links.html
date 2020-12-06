@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+{% block body %}
+{{ path|safe }}
+
+{% if languages %}
+	<div class="loginbox">
+		<h3> 'Your search results' </h3>
+	</div>
+	<div class="subforumtitle"> {{ language_input }}</div><br>
+
+	{% for language in languages %}
+		<div>
+			<a href = {{ language.links }} > {{ language.links }} </a>
+		</div>
+	{% endfor %}
+{% endif %}
+{% endblock %}

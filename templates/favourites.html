@@ -1,0 +1,56 @@
+{% extends 'layout.html' %}
+{% block body %}
+
+
+<div class="subforumheader">
+    <div class="subforumheadertitle">
+      <tr> Favorites </tr>
+    </div>
+</div>
+
+
+{% for fav in posts_f %}
+	<div class="actualpost">
+		<div class="actualposttitle">
+			<a href="/viewpost?post={{ fav.id }}">{{fav.title}}</a>
+			<div class="postposter" {% if fav.user.admin %} style="color: red;" {% endif %}>
+			{{ fav.user.username }}
+			</div>
+			<div class="posttime">
+				{{ fav.get_time_string() }}
+			</div>
+		</div>
+		<div class="postcontent">
+			{{fav.content}}
+		</div>
+	</div>
+{% endfor %}
+
+<div class="subforumheader">
+    <div class="subforumheadertitle">
+      <tr> Saved </tr>
+    </div>
+</div>
+
+{% for save in posts_s %}
+	<div class="actualpost">
+		<div class="actualposttitle">
+			<a href="/viewpost?post={{ save.id }}">{{save.title}}</a>
+			<div class="postposter" {% if save.user.admin %} style="color: red;" {% endif %}>
+			{{ save.user.username }}
+			</div>
+			<div class="posttime">
+				{{ save.get_time_string() }}
+			</div>
+		</div>
+		<div class="postcontent">
+			{{save.content}}
+		</div>
+	</div>
+{% endfor %}
+{% endblock %}
+
+
+
+
+

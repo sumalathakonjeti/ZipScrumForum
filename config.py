@@ -3,9 +3,8 @@ from flask_mail import Mail
 from app import app
 
 SECRET_KEY = os.environ['SECRET_KEY']
-#SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
-SITE_NAME = "Default Forum Name"
-SITE_DESCRIPTION = "Change this value in config.py"
+SITE_NAME = "Zip Code Cafe"
+SITE_DESCRIPTION = "Where knowledge is power"
 username = os.getenv('MYSQL_user')
 pswd = os.getenv('MYSQL_pw')
 email_usr = os.getenv('email_usr')
