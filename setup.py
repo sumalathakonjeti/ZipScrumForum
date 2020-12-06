@@ -8,6 +8,8 @@ def init_site():
 	add_subforum("Learn to Code", "Share resources, tips, and tricks")
 	add_subforum("Lab Help", "Ask questions related to labs")
 	add_subforum("Alumni", "Zip Code alumni networking")
+	add_subforum("Favorite", "Bookmarks")
+
 
 def add_subforum(title, description, parent=None):
 	sub = Subforum(title, description)
@@ -25,6 +27,7 @@ def add_subforum(title, description, parent=None):
 	print("adding " + title)
 	db.session.commit()
 	return sub
+
 
 def interpret_site_value(subforumstr):
 	segments = subforumstr.split(':')

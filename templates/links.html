@@ -1,0 +1,32 @@
+
+{% extends "layout.html" %}
+{% block body %}
+<div class="subforumheader">
+    <div class="subforumheadertitle">
+      <tr> Add Favorites bookmarks</tr>
+    </div>
+</div>
+{% if message %}
+  {{ message }}
+{% endif %}
+<div class="loginbox">
+	<h3>Add Bookmark</h3>
+	<form action="/action_addlink" method="POST">
+	<input class="loginelement" type="text" placeholder="Language" name="language">
+		<input class="inputbox" size="80" type="text" placeholder="Link" name="link"><br>
+	<input class="loginelement" type="submit" value="Add Link"><br>
+	</form>
+</div>
+<div class="subforumheader">
+    <div class="subforumheadertitle">
+      <tr> Saved bookmarks </tr>
+    </div>
+</div>
+<div class="loginbox">
+	<h3>Search a Language for links</h3>
+	<form action="/action_link" method="GET">
+	<input class="loginelement" type="text" placeholder="Language" name="Language"><br>
+	<input class="loginelement" type="submit" value="search">
+	</form>
+</div>
+{% endblock %}
