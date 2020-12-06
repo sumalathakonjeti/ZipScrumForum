@@ -13,6 +13,7 @@
 
       </style>
 </head>
+
 <body style ="background-color:powderblue;">
 		<style>
 		body {
@@ -23,10 +24,15 @@
 	<div class="img-container">
             <img src="https://pbs.twimg.com/profile_images/743503373438070784/rlUHe5AK_400x400.jpg" alt="Zipcode"  style="width:200px;height:150px;" text-align="center" >
 	</div>
+
+<body style="background-color:#E5E7E9">
+
+
 <div class="page">
 	<div class="header">
 		{% include 'header.html' %}
 	</div>
+
 	{% if errors %}
 	<div class="errors">
 	{% for error in errors %}
@@ -39,6 +45,12 @@
 {% endif %}
 	<div class="content">
 		{% block body %}{% endblock %}
+   	    {% if current_user.is_authenticated %}
+	    <div class="message">
+			{% include 'master.html' %}
+		</div>
+	    {% endif %}
+
 	</div>
 </div>
 </body>
