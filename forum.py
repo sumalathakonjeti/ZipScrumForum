@@ -74,16 +74,12 @@ def viewpost():
 @app.route('/tags')
 def tag_display():
     fav_post = []
-    save_post = []
     tags = Tags.query.filter(Tags.user_id == current_user.id).order_by(Tags.tag_id.desc()).limit(10)
     for tag in tags:
-        if tag.type == 'favourites':
+        if tag.type == 'favorite':
             fav_post.append(tag.post_info)
-        elif tag.type == 'saved':
-            save_post.append(tag.post_info)
     posts_fav = Post.query.filter(Post.id.in_(fav_post))
-    posts_save = Post.query.filter(Post.id.in_(save_post))
-    return render_template("favourites.html", user=current_user, posts_f=posts_fav, posts_s=posts_save)
+    return render_template("favourites.html", user=current_user, posts_f=posts_fav)
 
 
 # ACTIONS
@@ -190,16 +186,29 @@ def action_createaccount():
 def action_tag():
     post_id = int(request.args.get("post"))
     print('post_id:' + str(post_id))
-    user = current_user
+    user_now = current_user
     post = Post.query.filter(Post.id == post_id).first()
     if not post:
         return error("That post does not exist!")
-    type = 'favourites'
-    tag = Tags(type, post_id)
-    user.tags.append(tag)
-    db.session.commit()
+    type = 'favorite'
+    fav = Tags.query.filter(Tags.user_id == user_now.id, Tags.post_info == post_id).first()
+    if not fav:
+        tag = Tags(type, post_id)
+        user_now.tags.append(tag)
+        db.session.commit()
     return redirect("/tags")
 
+@login_required
+@app.route('/action_tag_del', methods=['GET', 'POST'])
+def action_tag_del():
+    post_id = int(request.args.get("post2"))
+    print('post_id:' + str(post_id))
+    user_now = current_user
+    fav = Tags.query.filter(Tags.user_id == user_now.id, Tags.post_info == post_id).first()
+    if fav:
+        db.session.delete(fav)
+        db.session.commit()
+    return redirect("/tags")
 
 def error(errormessage):
     return "<b style=\"color: red;\">" + errormessage + "</b>"
