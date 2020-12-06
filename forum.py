@@ -30,16 +30,22 @@ def index():
 
 @app.route('/subforum')
 def subforum():
-    subforum_id = int(request.args.get("sub"))
-    subforum = Subforum.query.filter(Subforum.id == subforum_id).first()
-    if not subforum:
-        return error("That subforum does not exist!")
-    posts = Post.query.filter(Post.subforum_id == subforum_id).order_by(Post.id.desc()).limit(50)
-    if not subforum.path:
-        subforum.path = generateLinkPath(subforum.id)
 
-    subforums = Subforum.query.filter(Subforum.parent_id == subforum_id).all()
-    return render_template("subforum.html", subforum=subforum, posts=posts, subforums=subforums, path=subforum.path)
+	subforum_id = int(request.args.get("sub"))
+	subforum = Subforum.query.filter(Subforum.id == subforum_id).first()
+
+	if not subforum:
+		return error("That subforum does not exist!")
+	posts = Post.query.filter(Post.subforum_id == subforum_id).order_by(Post.id.desc()).limit(50)
+	# languages = Languages.query.filter(Languages.user_id == current_user.id).order_by(Languages.lan_id.desc()).limit(10)
+
+	if not subforum.path:
+		subforum.path = generateLinkPath(subforum.id)
+	subforums = Subforum.query.filter(Subforum.parent_id == subforum_id).all()
+	if subforum.id == 7:
+		return render_template("links.html",subforum=subforum, posts=posts, subforums=subforums, path=subforum.path)
+	return render_template("subforum.html", subforum=subforum, posts=posts, subforums=subforums, path=subforum.path)
+
 
 
 @app.route('/loginform')
@@ -255,6 +261,49 @@ def show_messages():
         Message.id.desc())
     # print(messages)
     return render_template('messages.html', messages=messages)
+
+@app.route('/action_link', methods=['POST','GET'])
+def action_link():
+	# user_id = int(request.args.get("user"))
+	if request.method == 'GET':
+		languages_input = request.args.get('Language')
+		lang = Languages.query.filter(Languages.type == languages_input)
+		if lang.first():
+			return render_template('show_links.html', languages=lang, language_input=languages_input)
+		else:
+			errors = []
+			errors.append("No links found")
+			return render_template("show_links.html", errors=errors)
+
+		# return redirect("/", lang)
+
+
+	# return redirect("/",lang)
+@app.route('/action_addlink',methods=['POST','GET'])
+def action_addlink():
+	# user_id = User.get_id()
+	user = current_user
+	type = request.form['language']
+	link = request.form['link']
+	errors = []
+	retry = False
+	if link_taken(link):
+		errors.append("link is already taken!")
+		retry = True
+	if retry:
+		return render_template("links.html", errors=errors)
+	languages = Languages(type, link)
+	# db.session.add(languages)
+	# db.session.commit()
+	# return redirect("/")
+
+	# language = Languages(type,links)
+	user.languages.append(languages)
+	db.session.commit()
+	# message =
+	# return redirect("/")
+	return render_template('links.html',message='Link created successfully')
+
 
 
 messages = []  # list of Message(s)

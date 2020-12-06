@@ -38,12 +38,16 @@ def valid_title(title):
 
 
 def valid_content(content):
-    return len(content) > 10 and len(content) < 5000
 
+	return len(content) > 10 and len(content) < 5000
+
+def link_taken(link):
+	return Languages.query.filter(Languages.links == link).first()
 
 # OBJECT MODELS
 
 class User(UserMixin, db.Model):
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.VARCHAR(500), unique=True)
     password_hash = db.Column(db.Text)
@@ -53,7 +57,7 @@ class User(UserMixin, db.Model):
     comments = db.relationship("Comment", backref="user")
     tags = db.relationship("Tags", backref="user")
     message = db.relationship("Message", backref="user")
-
+    languages = db.relationship("Languages",backref="user")
     # message = db.relationship('Message', backref='user')
 
     def __init__(self, email, username, password):
@@ -111,6 +115,7 @@ class Post(db.Model):
         return self.savedresponce
 
 
+
 class Subforum(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.VARCHAR(500), unique=True)
@@ -165,14 +170,28 @@ class Comment(db.Model):
 
 
 class Tags(db.Model):
-    tag_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    type = db.Column(db.Text)
-    post_info = db.Column(db.Integer, db.ForeignKey('post.id'))
 
-    def __init__(self, type, post_info):
-        self.type = type
-        self.post_info = post_info
+	tag_id = db.Column(db.Integer, primary_key=True)
+	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+	type = db.Column(db.Text)
+	post_info = db.Column(db.Integer, db.ForeignKey('post.id'))
+
+	def __init__(self, type, post_info):
+		self.type = type
+		self.post_info = post_info
+
+
+class Languages(db.Model):
+	lan_id = db.Column(db.Integer, primary_key=True)
+	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+	type = db.Column(db.Text)
+	links = db.Column(db.Text)
+	def __init__(self, type, links):
+		# self.user_id = user_id
+		self.type = type
+		self.links = links
+
+
 
 
 class Message(db.Model):
@@ -215,3 +234,4 @@ class Message(db.Model):
         else:
             self.savedresponce = "Just a moment ago!"
         return self.savedresponce
+
