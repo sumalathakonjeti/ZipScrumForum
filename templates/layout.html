@@ -4,6 +4,7 @@
 	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='bootstrap.min.css')}}">
 	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css')}}">
 	<title>{{ config.SITE_NAME }}</title>
+
 </head>
 <body style="background-color:#E5E7E9">
 
@@ -11,7 +12,9 @@
 	<div class="header">
 		{% include 'header.html' %}
 	</div>
+<div class="content-section">
 
+</div>
 	{% if errors %}
 	<div class="errors">
 	{% for error in errors %}

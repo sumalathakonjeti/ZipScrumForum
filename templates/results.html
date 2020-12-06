@@ -2,15 +2,20 @@
 {% block body %}
 {{ path|safe}}
 
+
 {%if form%}
 {%for post in form%}
 	<div class="actualpost">
 		<div class="actualposttitle">
+			<div>{{ post.subforum.title }}</div>
 			<a href="/viewpost?post={{ post.id }}">{{post.title}}</a>
 			<div class="postposter" {% if post.user.admin %} style="color: red;" {% endif %}>
 				{{ post.user.username }}
 
 			</div>
+<!--			<div class = "subforum">-->
+<!--				{{ post.subforum.title }}-->
+<!--			</div>-->
 			<div class="posttime">
 				{{ post.get_time_string() }}
 			</div>

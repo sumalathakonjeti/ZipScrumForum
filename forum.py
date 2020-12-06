@@ -3,16 +3,18 @@ from flask_login import LoginManager, current_user, login_user, logout_user  # U
 from flask_login.utils import login_required  # UPDATED
 from flask_login.login_manager import LoginManager  # UPDATED
 import datetime
+
+from sqlalchemy.orm.session import sessionmaker
+
 from messaging import *
 import config
 import os
 from setup import *
-
 import setup
 from flask_wtf.form import FlaskForm
 from wtforms.fields.core import StringField
 from wtforms.fields.simple import SubmitField
-from sqlalchemy import or_, join
+from sqlalchemy import or_, join, create_engine, engine
 
 # SETUP
 app.config.from_object(config)
@@ -277,28 +279,42 @@ db.create_all()
 if not Subforum.query.all():
     init_site()
 
-@app.route('/search', methods=['POST','GET'])
-def search():
-	search = SearchForm(request.form)
-	if request.method == "POST":
-		return search_results(search)
 
-	return render_template('search.html', form=search)
+@app.route('/search', methods=['POST', 'GET'])
+def search():
+    search = SearchForm(request.form)
+    if request.method == "POST":
+        return search_results(search)
+
+    return render_template('search.html', form=search)
+
 
 @app.route('/results')
 def search_results(search):
-	post = search.data['search']
-	post = Post.query.outerjoin(Post.comments).filter(or_(Post.title.ilike(f'%{post}%'),
-														  Post.content.ilike(f'%{post}%'),
-														  Comment.content.ilike(f'%{post}%')))
-	print(post)
-	# post = Post.query.filter(or_(Post.title.ilike(f'%{post}%'), Post.content.ilike(f'%{post}%')))
+    post = search.data['search']
 
-	return render_template("results.html", form=post)
+    # j = Post.join(Comments, Post.c.id == Comment.c.st_id)
+    # stmt = select([Post]).select_from(j)
+    # result = conn.execute(stmt)
+    # result.fetchall()
+
+    # Session = sessionmaker(bind = engine)
+    # session = Session()
+
+    post = Post.query.outerjoin(Post.comments).filter(or_(Post.title.ilike(f'%{post}%'),
+                                                          Post.content.ilike(f'%{post}%'),
+                                                          Comment.content.ilike(f'%{post}%')))
+    # post = db.session.query(Post,Comment,User).filter(or_(Post.title.ilike(f'%{post}%'),
+    #                                                       Post.content.ilike(f'%{post}%'),
+    #                                                       Comment.content.ilike(f'%{post}%')))
+    # print(post)
+
+    return render_template("results.html", form=post)
+
 
 class SearchForm(FlaskForm):
-   search = StringField('Search')
-   submit = SubmitField('Submit')
+    search = StringField('Search')
+    submit = SubmitField('Submit')
 
 
 if __name__ == "__main__":
