@@ -3,26 +3,30 @@ from flask import *
 from flask_login import LoginManager, current_user, login_user, logout_user #UPDATED
 from flask_login.utils import login_required #UPDATED
 from flask_login.login_manager import LoginManager #UPDATED
+from forms import *
 import datetime
-from app import app
+from app import app, mail
 from database import *
 import config
 import os
 from setup import *
 import setup
+from flask_mail import Message
+from werkzeug.security import generate_password_hash, check_password_hash
 
 #SETUP
 app.config.from_object(config)
 
 
-login_manager = LoginManager()
-login_manager.init_app(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+#login_manager.init_app(app)
 
 
 #DATABASE STUFF
 @login_manager.user_loader
-def load_user(userid):
-	return User.query.get(userid)
+def load_user(user_id):
+	return User.query.get(user_id)
 
 
 
@@ -45,9 +49,36 @@ def subforum():
 	subforums = Subforum.query.filter(Subforum.parent_id == subforum_id).all()
 	return render_template("subforum.html", subforum=subforum, posts=posts, subforums=subforums, path=subforum.path)
 
-@app.route('/loginform')
-def loginform():
-	return render_template("login.html")
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+	if current_user.is_authenticated:
+		return redirect(url_for('index'))
+	form = LoginForm()
+	if form.validate_on_submit():
+		user = User.query.filter_by(username=form.username.data).first()
+		if user and user.check_password(form.password.data) and user.login_attempts < 3:
+			login_user(user, remember=form.remember.data)
+			return redirect(url_for('index'))
+		else:
+			user.login_attempts = user.login_attempts + 1
+			db.session.commit()
+			flash('Login Unsuccessful. Please check email and password', 'danger')
+	return render_template('login.html', title='Login', form=form)
+
+
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+	if current_user.is_authenticated:
+		return redirect(url_for('index'))
+	form = RegistrationForm()
+	if form.validate_on_submit():
+		user = User(username=form.username.data, email=form.email.data, password=form.password.data)
+		db.session.add(user)
+		db.session.commit()
+		flash('Your account has been created! You are now able to log in', 'success')
+		return redirect(url_for('index'))
+	return render_template('register.html', title='Register', form=form)
 
 
 @login_required
@@ -60,6 +91,7 @@ def addpost():
 
 	return render_template("createpost.html", subforum=subforum)
 
+
 @app.route('/viewpost')
 def viewpost():
 	postid = int(request.args.get("post"))
@@ -71,7 +103,6 @@ def viewpost():
 	comments = Comment.query.filter(Comment.post_id == postid).order_by(Comment.id.desc()) # no need for scalability now
 	return render_template("viewpost.html", post=post, path=subforum.path, comments=comments)
 
-#ACTIONS
 
 @login_required
 @app.route('/action_comment', methods=['POST', 'GET'])
@@ -87,6 +118,7 @@ def comment():
 	post.comments.append(comment)
 	db.session.commit()
 	return redirect("/viewpost?post=" + str(post_id))
+
 
 @login_required
 @app.route('/action_post', methods=['POST'])
@@ -117,20 +149,6 @@ def action_post():
 	return redirect("/viewpost?post=" + str(post.id))
 
 
-@app.route('/action_login', methods=['POST'])
-def action_login():
-	username = request.form['username']
-	password = request.form['password']
-	user = User.query.filter(User.username == username).first()
-	if user and user.check_password(password):
-		login_user(user)
-	else:
-		errors = []
-		errors.append("Username or password is incorrect!")
-		return render_template("login.html", errors=errors)
-	return redirect("/")
-
-
 @login_required
 @app.route('/action_logout')
 def action_logout():
@@ -138,37 +156,10 @@ def action_logout():
 	logout_user()
 	return redirect("/")
 
-@app.route('/action_createaccount', methods=['POST'])
-def action_createaccount():
-	username = request.form['username']
-	password = request.form['password']
-	email = request.form['email']
-	errors = []
-	retry = False
-	if username_taken(username):
-		errors.append("Username is already taken!")
-		retry=True
-	if email_taken(email):
-		errors.append("An account already exists with this email!")
-		retry = True
-	if not valid_username(username):
-		errors.append("Username is not valid!")
-		retry = True
-	if not valid_password(password):
-		errors.append("Password is not valid!")
-		retry = True
-	if retry:
-		return render_template("login.html", errors=errors)
-	user = User(email, username, password)
-	if user.username == "admin":
-		user.admin = True
-	db.session.add(user)
-	db.session.commit()
-	login_user(user)
-	return redirect("/")
 
 def error(errormessage):
 	return "<b style=\"color: red;\">" + errormessage + "</b>"
+
 
 def generateLinkPath(subforumid):
 	links = []
@@ -184,6 +175,47 @@ def generateLinkPath(subforumid):
 		link = link + " / " + l
 	return link
 
+
+def send_reset_email(user):
+	token = user.get_reset_token()
+	msg = Message('Password Reset Request', sender='ZipcodeScrum@zipcode.com', recipients=[user.email])
+	msg.body = f'''To reset your password please click the following link:
+{url_for('reset_token', token=token, _external=True)}	
+
+If you did not make this request please ignore this email.
+'''
+	mail.send(msg)
+
+
+@app.route("/reset_password", methods=['GET', 'POST'])
+def reset_request():
+	if current_user.is_authenticated:
+		return redirect(url_for('index'))
+	form = RequestResetForm()
+	if form.validate_on_submit():
+		user = User.query.filter_by(email=form.email.data).first()
+		send_reset_email(user)
+		flash('An email has been sent', 'info')
+		return redirect(url_for('login'))
+	return render_template('reset_request.html', title='Reset Password 1', form=form)
+
+
+@app.route("/reset_password/<token>", methods=['GET', 'POST'])
+def reset_token(token):
+	if current_user.is_authenticated:
+		return redirect(url_for('index'))
+	user = User.verify_reset_token(token)
+	print(user)
+	if user is None:
+		flash('That is an invalid or expired token', 'warning')
+		return redirect(url_for('reset_request'))
+	form = ResetPasswordForm()
+	if form.validate_on_submit():
+		user.password_hash = generate_password_hash(form.password.data)
+		user.login_attempts = 0
+		db.session.commit()
+		return redirect(url_for('login'))
+	return render_template('reset_token.html', title='Reset Password 2', form=form)
 
 
 db.create_all()
