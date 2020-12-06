@@ -309,6 +309,7 @@ def search_results(search):
     #                                                       Comment.content.ilike(f'%{post}%')))
     # print(post)
 
+
     return render_template("results.html", form=post)
 
 
