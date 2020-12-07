@@ -16,6 +16,10 @@ from wtforms.fields.core import StringField
 from wtforms.fields.simple import SubmitField
 from sqlalchemy import or_, join, create_engine, engine
 from forms import LoginForm, RegistrationForm, RequestResetForm, ResetPasswordForm
+from flask_mail import Message
+from werkzeug.security import generate_password_hash, check_password_hash
+from database import *
+from app import app, mail
 
 # SETUP
 app.config.from_object(config)
