@@ -24,29 +24,11 @@
 			{{fav.content}}
 		</div>
 	</div>
-{% endfor %}
-
-<div class="subforumheader">
-    <div class="subforumheadertitle">
-      <tr> Saved </tr>
-    </div>
-</div>
-
-{% for save in posts_s %}
-	<div class="actualpost">
-		<div class="actualposttitle">
-			<a href="/viewpost?post={{ save.id }}">{{save.title}}</a>
-			<div class="postposter" {% if save.user.admin %} style="color: red;" {% endif %}>
-			{{ save.user.username }}
-			</div>
-			<div class="posttime">
-				{{ save.get_time_string() }}
-			</div>
-		</div>
-		<div class="postcontent">
-			{{save.content}}
-		</div>
-	</div>
+	{% if current_user.is_authenticated %}
+	<form action="/action_tag_del?post2={{ fav.id }}" method="POST">
+		<input type="submit" id="delete_tag" value="Delete favorite">
+	</form>
+	{% endif %}
 {% endfor %}
 {% endblock %}
 
