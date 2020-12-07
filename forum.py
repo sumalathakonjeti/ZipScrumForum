@@ -189,7 +189,6 @@ def action_tag():
 @app.route('/action_tag_del', methods=['GET', 'POST'])
 def action_tag_del():
     post_id = int(request.args.get("post2"))
-    print('post_id:' + str(post_id))
     user_now = current_user
     fav = Tags.query.filter(Tags.user_id == user_now.id, Tags.post_info == post_id).first()
     if fav:
