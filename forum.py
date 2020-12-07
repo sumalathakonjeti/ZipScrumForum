@@ -173,7 +173,6 @@ def action_logout():
 @app.route('/action_tag', methods=['GET', 'POST'])
 def action_tag():
     post_id = int(request.args.get("post"))
-    print('post_id:' + str(post_id))
     user_now = current_user
     post = Post.query.filter(Post.id == post_id).first()
     if not post:
