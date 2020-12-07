@@ -61,8 +61,9 @@ def login():
             login_user(user, remember=form.remember.data)
             return redirect(url_for('index'))
         else:
-            user.login_attempts = user.login_attempts + 1
-            db.session.commit()
+            if user:
+                user.login_attempts = user.login_attempts + 1
+                db.session.commit()
             flash('Login Unsuccessful. Please check email and password', 'danger')
     return render_template('login.html', title='Login', form=form)
 
@@ -77,6 +78,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         flash('Your account has been created! You are now able to log in', 'success')
+        login_user(user)
         return redirect(url_for('index'))
     return render_template('register.html', title='Register', form=form)
 

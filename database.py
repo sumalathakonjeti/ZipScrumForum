@@ -56,6 +56,9 @@ class User(UserMixin, db.Model):
     login_attempts = db.Column(db.Integer, default=0)
     posts = db.relationship("Post", backref="user")
     comments = db.relationship("Comment", backref="user")
+    tags = db.relationship("Tags", backref="user")
+    message = db.relationship("Message", backref="user")
+    languages = db.relationship("Languages", backref="user")
 
     def __init__(self, email, username, password):
         self.email = email
