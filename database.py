@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 import re
 import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 db = SQLAlchemy(app)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -11,7 +12,7 @@ password_regex = re.compile("^[a-zA-Z0-9!@#%&]{6,40}$")
 username_regex = re.compile("^[a-zA-Z0-9!@#%&]{4,40}$")
 
 
-# Account checks
+#Account checks
 def username_taken(username):
     return User.query.filter(User.username == username).first()
 
@@ -22,9 +23,9 @@ def email_taken(email):
 
 def valid_username(username):
     if not username_regex.match(username):
-        # username does not meet password reqirements
+        #username does not meet password reqirements
         return False
-    # username is not taken and does meet the password requirements
+    #username is not taken and does meet the password requirements
     return True
 
 
@@ -32,33 +33,29 @@ def valid_password(password):
     return password_regex.match(password)
 
 
-# Post checks
+#Post checks
 def valid_title(title):
     return len(title) > 4 and len(title) < 140
 
 
 def valid_content(content):
+    return len(content) > 10 and len(content) < 5000
 
-	return len(content) > 10 and len(content) < 5000
 
 def link_taken(link):
-	return Languages.query.filter(Languages.links == link).first()
+    return Languages.query.filter(Languages.links == link).first()
+
 
 # OBJECT MODELS
-
 class User(UserMixin, db.Model):
-
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.VARCHAR(500), unique=True)
-    password_hash = db.Column(db.Text)
-    email = db.Column(db.VARCHAR(500), unique=True)
-    admin = db.Column(db.Boolean, default=False, unique=True)
+    username = db.Column(db.VARCHAR(20), unique=True, nullable=False)
+    password_hash = db.Column(db.Text, nullable=False)
+    email = db.Column(db.VARCHAR(500), unique=True, nullable=False)
+    admin = db.Column(db.Boolean, default=False)
+    login_attempts = db.Column(db.Integer, default=0)
     posts = db.relationship("Post", backref="user")
     comments = db.relationship("Comment", backref="user")
-    tags = db.relationship("Tags", backref="user")
-    message = db.relationship("Message", backref="user")
-    languages = db.relationship("Languages",backref="user")
-    # message = db.relationship('Message', backref='user')
 
     def __init__(self, email, username, password):
         self.email = email
@@ -67,6 +64,19 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def get_reset_token(self, expires_sec=1800):
+        s = Serializer(app.config['SECRET_KEY'], expires_sec)
+        return s.dumps({'user_id': self.id}).decode('utf-8')
+
+    @staticmethod
+    def verify_reset_token(token):
+        s = Serializer(app.config['SECRET_KEY'])
+        try:
+            user_id = s.loads(token)['user_id']
+        except:
+            return None
+        return User.query.get(user_id)
 
 
 class Post(db.Model):
@@ -113,7 +123,6 @@ class Post(db.Model):
             self.savedresponce = "Just a moment ago!"
 
         return self.savedresponce
-
 
 
 class Subforum(db.Model):
@@ -171,27 +180,25 @@ class Comment(db.Model):
 
 class Tags(db.Model):
 
-	tag_id = db.Column(db.Integer, primary_key=True)
-	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-	type = db.Column(db.Text)
-	post_info = db.Column(db.Integer, db.ForeignKey('post.id'))
+    tag_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    type = db.Column(db.Text)
+    post_info = db.Column(db.Integer, db.ForeignKey('post.id'))
 
-	def __init__(self, type, post_info):
-		self.type = type
-		self.post_info = post_info
+    def __init__(self, type, post_info):
+        self.type = type
+        self.post_info = post_info
 
 
 class Languages(db.Model):
-	lan_id = db.Column(db.Integer, primary_key=True)
-	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-	type = db.Column(db.Text)
-	links = db.Column(db.Text)
-	def __init__(self, type, links):
-		# self.user_id = user_id
-		self.type = type
-		self.links = links
-
-
+    lan_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    type = db.Column(db.Text)
+    links = db.Column(db.Text)
+    def __init__(self, type, links):
+        # self.user_id = user_id
+        self.type = type
+        self.links = links
 
 
 class Message(db.Model):

@@ -7,6 +7,6 @@
 	<b {% if current_user.admin %} style="color: red;" {% endif %}>{{ current_user.username }}</b><a class="logoutlink" href="/action_logout">(logout)</a><a class="nolinks" href="/tags"><b>   Tags</b></a>
 	<a href ="/search"> Search </a>
 	{% else %}
-	<a href="/loginform">Login/Register</a>
+	<a href="/login">Click here to login or register!</a>
 	{% endif %}
 </div>
