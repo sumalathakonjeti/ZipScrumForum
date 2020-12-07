@@ -11,8 +11,15 @@ import config
 import os
 from setup import *
 import setup
+
+from flask_wtf.form import FlaskForm
+from wtforms.fields.core import StringField
+from wtforms.fields.simple import SubmitField
+from sqlalchemy import or_, join, create_engine, engine
+
 from flask_mail import Message
 from werkzeug.security import generate_password_hash, check_password_hash
+
 
 # SETUP
 app.config.from_object(config)
@@ -292,7 +299,6 @@ def action_addlink():
     # return redirect("/")
     return render_template('links.html',message='Link created successfully')
 
-
 def generateLinkPath(subforumid):
     links = []
     subforum = Subforum.query.filter(Subforum.id == subforumid).first()
@@ -415,6 +421,30 @@ def action_delete():
 db.create_all()
 if not Subforum.query.all():
     init_site()
+
+
+@app.route('/search', methods=['POST', 'GET'])
+def search():
+    search = SearchForm(request.form)
+    if request.method == "POST":
+        return search_results(search)
+
+    return render_template('search.html', form=search)
+
+
+@app.route('/results')
+def search_results(search):
+    post = search.data['search']
+    post = Post.query.outerjoin(Post.comments).filter(or_(Post.title.ilike(f'%{post}%'),
+                                                          Post.content.ilike(f'%{post}%'),
+                                                          Comment.content.ilike(f'%{post}%')))
+    return render_template("results.html", form=post)
+
+
+class SearchForm(FlaskForm):
+    search = StringField('Search')
+    submit = SubmitField('Submit')
+
 
 if __name__ == "__main__":
     # setup.setup()
