@@ -1,24 +1,30 @@
 from flask import *
-from flask_login import LoginManager, current_user, login_user, logout_user  # UPDATED
-from flask_login.utils import login_required  # UPDATED
-from flask_login.login_manager import LoginManager  # UPDATED
+from flask_login import LoginManager, current_user, login_user, logout_user #UPDATED
+from flask_login.utils import login_required #UPDATED
+from flask_login.login_manager import LoginManager #UPDATED
+from forms import *
 import datetime
 from messaging import *
+from app import app, mail
+from database import *
 import config
 import os
 from setup import *
+import setup
+from flask_mail import Message
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # SETUP
 app.config.from_object(config)
 
-login_manager = LoginManager()
-login_manager.init_app(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
 
 # DATABASE STUFF
 @login_manager.user_loader
-def load_user(userid):
-    return User.query.get(userid)
+def load_user(user_id):
+    return User.query.get(user_id)
 
 
 # VIEWS
@@ -31,26 +37,48 @@ def index():
 @app.route('/subforum')
 def subforum():
 
-	subforum_id = int(request.args.get("sub"))
-	subforum = Subforum.query.filter(Subforum.id == subforum_id).first()
-
-	if not subforum:
-		return error("That subforum does not exist!")
-	posts = Post.query.filter(Post.subforum_id == subforum_id).order_by(Post.id.desc()).limit(50)
-	# languages = Languages.query.filter(Languages.user_id == current_user.id).order_by(Languages.lan_id.desc()).limit(10)
-
-	if not subforum.path:
-		subforum.path = generateLinkPath(subforum.id)
-	subforums = Subforum.query.filter(Subforum.parent_id == subforum_id).all()
-	if subforum.id == 7:
-		return render_template("links.html",subforum=subforum, posts=posts, subforums=subforums, path=subforum.path)
-	return render_template("subforum.html", subforum=subforum, posts=posts, subforums=subforums, path=subforum.path)
+    subforum_id = int(request.args.get("sub"))
+    subforum = Subforum.query.filter(Subforum.id == subforum_id).first()
+    if not subforum:
+        return error("That subforum does not exist!")
+    posts = Post.query.filter(Post.subforum_id == subforum_id).order_by(Post.id.desc()).limit(50)
+    if not subforum.path:
+        subforum.path = generateLinkPath(subforum.id)
+    subforums = Subforum.query.filter(Subforum.parent_id == subforum_id).all()
+    if subforum.id == 7:
+        return render_template("links.html",subforum=subforum, posts=posts, subforums=subforums, path=subforum.path)
+    return render_template("subforum.html", subforum=subforum, posts=posts, subforums=subforums, path=subforum.path)
 
 
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user and user.check_password(form.password.data) and user.login_attempts < 3:
+            login_user(user, remember=form.remember.data)
+            return redirect(url_for('index'))
+        else:
+            user.login_attempts = user.login_attempts + 1
+            db.session.commit()
+            flash('Login Unsuccessful. Please check email and password', 'danger')
+    return render_template('login.html', title='Login', form=form)
 
-@app.route('/loginform')
-def loginform():
-    return render_template("login.html")
+
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=form.username.data, email=form.email.data, password=form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('Your account has been created! You are now able to log in', 'success')
+        return redirect(url_for('index'))
+    return render_template('register.html', title='Register', form=form)
 
 
 @login_required
@@ -87,8 +115,6 @@ def tag_display():
     posts_fav = Post.query.filter(Post.id.in_(fav_post))
     return render_template("favourites.html", user=current_user, posts_f=posts_fav)
 
-
-# ACTIONS
 
 @login_required
 @app.route('/action_comment', methods=['POST', 'GET'])
@@ -135,55 +161,11 @@ def action_post():
     return redirect("/viewpost?post=" + str(post.id))
 
 
-@app.route('/action_login', methods=['POST'])
-def action_login():
-    username = request.form['username']
-    password = request.form['password']
-    user = User.query.filter(User.username == username).first()
-    if user and user.check_password(password):
-        login_user(user)
-    else:
-        errors = []
-        errors.append("Username or password is incorrect!")
-        return render_template("login.html", errors=errors)
-    return redirect("/")
-
-
 @login_required
 @app.route('/action_logout')
 def action_logout():
     # todo
     logout_user()
-    return redirect("/")
-
-
-@app.route('/action_createaccount', methods=['POST'])
-def action_createaccount():
-    username = request.form['username']
-    password = request.form['password']
-    email = request.form['email']
-    errors = []
-    retry = False
-    if username_taken(username):
-        errors.append("Username is already taken!")
-        retry = True
-    if email_taken(email):
-        errors.append("An account already exists with this email!")
-        retry = True
-    if not valid_username(username):
-        errors.append("Username is not valid!")
-        retry = True
-    if not valid_password(password):
-        errors.append("Password is not valid!")
-        retry = True
-    if retry:
-        return render_template("login.html", errors=errors)
-    user = User(email, username, password)
-    if user.username == "admin":
-        user.admin = True
-    db.session.add(user)
-    db.session.commit()
-    login_user(user)
     return redirect("/")
 
 
@@ -262,48 +244,65 @@ def show_messages():
     # print(messages)
     return render_template('messages.html', messages=messages)
 
+
 @app.route('/action_link', methods=['POST','GET'])
 def action_link():
-	# user_id = int(request.args.get("user"))
-	if request.method == 'GET':
-		languages_input = request.args.get('Language')
-		lang = Languages.query.filter(Languages.type == languages_input)
-		if lang.first():
-			return render_template('show_links.html', languages=lang, language_input=languages_input)
-		else:
-			errors = []
-			errors.append("No links found")
-			return render_template("show_links.html", errors=errors)
+    # user_id = int(request.args.get("user"))
+    if request.method == 'GET':
+        languages_input = request.args.get('Language')
+        lang = Languages.query.filter(Languages.type == languages_input)
+        if lang.first():
+            return render_template('show_links.html', languages=lang, language_input=languages_input)
+        else:
+            errors = []
+            errors.append("No links found")
+            return render_template("show_links.html", errors=errors)
 
-		# return redirect("/", lang)
+            # return redirect("/", lang)
 
 
-	# return redirect("/",lang)
+    # return redirect("/",lang)
+
+
 @app.route('/action_addlink',methods=['POST','GET'])
 def action_addlink():
-	# user_id = User.get_id()
-	user = current_user
-	type = request.form['language']
-	link = request.form['link']
-	errors = []
-	retry = False
-	if link_taken(link):
-		errors.append("link is already taken!")
-		retry = True
-	if retry:
-		return render_template("links.html", errors=errors)
-	languages = Languages(type, link)
-	# db.session.add(languages)
-	# db.session.commit()
-	# return redirect("/")
+    # user_id = User.get_id()
+    user = current_user
+    type = request.form['language']
+    link = request.form['link']
+    errors = []
+    retry = False
+    if link_taken(link):
+        errors.append("link is already taken!")
+        retry = True
+    if retry:
+        return render_template("links.html", errors=errors)
+    languages = Languages(type, link)
+    # db.session.add(languages)
+    # db.session.commit()
+    # return redirect("/")
 
-	# language = Languages(type,links)
-	user.languages.append(languages)
-	db.session.commit()
-	# message =
-	# return redirect("/")
-	return render_template('links.html',message='Link created successfully')
+    # language = Languages(type,links)
+    user.languages.append(languages)
+    db.session.commit()
+    # message =
+    # return redirect("/")
+    return render_template('links.html',message='Link created successfully')
 
+
+def generateLinkPath(subforumid):
+    links = []
+    subforum = Subforum.query.filter(Subforum.id == subforumid).first()
+    parent = Subforum.query.filter(Subforum.id == subforum.parent_id).first()
+    links.append("<a href=\"/subforum?sub=" + str(subforum.id) + "\">" + subforum.title + "</a>")
+    while parent is not None:
+        links.append("<a href=\"/subforum?sub=" + str(parent.id) + "\">" + parent.title + "</a>")
+        parent = Subforum.query.filter(Subforum.id == parent.parent_id).first()
+    links.append("<a href=\"/\">Forum Index</a>")
+    link = ""
+    for l in reversed(links):
+        link = link + " / " + l
+    return link
 
 
 messages = []  # list of Message(s)
@@ -323,6 +322,48 @@ def add_message(sender, m):
         db.session.commit()
         return redirect("/")
         # return msg
+
+
+def send_reset_email(user):
+    token = user.get_reset_token()
+    msg = Message('Password Reset Request', sender='ZipcodeScrum@zipcode.com', recipients=[user.email])
+    msg.body = f'''To reset your password please click the following link:
+{url_for('reset_token', token=token, _external=True)}	
+
+If you did not make this request please ignore this email.
+'''
+    mail.send(msg)
+
+
+@app.route("/reset_password", methods=['GET', 'POST'])
+def reset_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = RequestResetForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        send_reset_email(user)
+        flash('An email has been sent', 'info')
+        return redirect(url_for('login'))
+    return render_template('reset_request.html', title='Reset Password 1', form=form)
+
+
+@app.route("/reset_password/<token>", methods=['GET', 'POST'])
+def reset_token(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    user = User.verify_reset_token(token)
+    print(user)
+    if user is None:
+        flash('That is an invalid or expired token', 'warning')
+        return redirect(url_for('reset_request'))
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user.password_hash = generate_password_hash(form.password.data)
+        user.login_attempts = 0
+        db.session.commit()
+        return redirect(url_for('login'))
+    return render_template('reset_token.html', title='Reset Password 2', form=form)
 
 
 db.create_all()
