@@ -59,6 +59,7 @@ class User(UserMixin, db.Model):
     posts = db.relationship("Post", backref="user")
     comments = db.relationship("Comment", backref="user")
     tags = db.relationship("Tags", backref="user")
+    message = db.relationship("Message", backref="user")
 
     def __init__(self, email, username, password):
         self.email = email

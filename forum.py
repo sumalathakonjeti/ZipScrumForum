@@ -1,25 +1,25 @@
 from flask import *
-from flask_login.utils import login_required
-from flask_login import LoginManager, current_user, login_user, logout_user, login_required
-from flask_login.login_manager import LoginManager
-from forms import *
+from flask_login import LoginManager, current_user, login_user, logout_user  # UPDATED
+from flask_login.utils import login_required  # UPDATED
+from flask_login.login_manager import LoginManager  # UPDATED
 import datetime
+
+from sqlalchemy.orm.session import sessionmaker
+
 from messaging import *
-from app import app, mail
-from database import *
 import config
 import os
 from setup import *
 import setup
-
 from flask_wtf.form import FlaskForm
 from wtforms.fields.core import StringField
 from wtforms.fields.simple import SubmitField
 from sqlalchemy import or_, join, create_engine, engine
-
+from forms import LoginForm, RegistrationForm, RequestResetForm, ResetPasswordForm
 from flask_mail import Message
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from database import *
+from app import app, mail
 
 # SETUP
 app.config.from_object(config)
