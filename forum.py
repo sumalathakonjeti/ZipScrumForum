@@ -1,7 +1,7 @@
 from flask import *
-from flask_login import LoginManager, current_user, login_user, logout_user #UPDATED
-from flask_login.utils import login_required #UPDATED
-from flask_login.login_manager import LoginManager #UPDATED
+from flask_login.utils import login_required
+from flask_login import LoginManager, current_user, login_user, logout_user, login_required
+from flask_login.login_manager import LoginManager
 from forms import *
 import datetime
 from messaging import *
@@ -19,6 +19,7 @@ app.config.from_object(config)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+login_manager.init_app(app)
 
 
 # DATABASE STUFF
@@ -28,6 +29,10 @@ def load_user(user_id):
 
 
 # VIEWS
+def load_user(userid):
+    return User.query.get(userid)
+
+
 @app.route('/')
 def index():
     subforums = Subforum.query.filter(Subforum.parent_id == None).order_by(Subforum.id)
@@ -81,8 +86,8 @@ def register():
     return render_template('register.html', title='Register', form=form)
 
 
-@login_required
 @app.route('/addpost')
+@login_required
 def addpost():
     subforum_id = int(request.args.get("sub"))
     subforum = Subforum.query.filter(Subforum.id == subforum_id).first()
@@ -362,6 +367,49 @@ def reset_token(token):
         db.session.commit()
         return redirect(url_for('login'))
     return render_template('reset_token.html', title='Reset Password 2', form=form)
+
+@app.route('/admin')
+@login_required
+def admin():
+	form = UpdateAccount()
+	# username = request.form['username']
+	# email = request.form['email']
+	# current_user.username = username
+	return render_template('admin.html')
+
+@app.route('/action_update', methods=['POST'])
+def action_update():
+	username = request.form['username']
+	email = request.form['email']
+	current_user.username = username
+	current_user.email = email
+	db.session.commit()
+	flash('Your account has been updated', 'success')
+	return redirect("/")
+
+@app.route('/update_post', methods=['POST'])
+def update_post():
+	post_id = int(request.args.get("post"))
+	post = Post.query.filter(Post.id == post_id).first()
+	return render_template("update_post.html", post=post)
+
+@app.route('/action_posted', methods=['POST', 'GET'])
+def action_posted():
+	post_id = request.form['post_id']
+	title = request.form['title']
+	content = request.form['content']
+	post = Post.query.filter(Post.id == post_id).first()
+	post.title = title
+	post.content = content
+	db.session.commit()
+	return redirect("/")
+
+@app.route('/action_delete', methods=['POST', 'GET'])
+def action_delete():
+	post_id = int(request.args.get("post"))
+	Post.query.filter(Post.id == post_id).delete()
+	db.session.commit()
+	return redirect("/")
 
 
 db.create_all()

@@ -5,14 +5,16 @@ import re
 import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField
+from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
 
 db = SQLAlchemy(app)
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 password_regex = re.compile("^[a-zA-Z0-9!@#%&]{6,40}$")
 username_regex = re.compile("^[a-zA-Z0-9!@#%&]{4,40}$")
 
 
-#Account checks
+# Account checks
 def username_taken(username):
     return User.query.filter(User.username == username).first()
 
@@ -23,9 +25,9 @@ def email_taken(email):
 
 def valid_username(username):
     if not username_regex.match(username):
-        #username does not meet password reqirements
+        # username does not meet password reqirements
         return False
-    #username is not taken and does meet the password requirements
+    # username is not taken and does meet the password requirements
     return True
 
 
@@ -33,7 +35,7 @@ def valid_password(password):
     return password_regex.match(password)
 
 
-#Post checks
+# Post checks
 def valid_title(title):
     return len(title) > 4 and len(title) < 140
 
@@ -180,7 +182,6 @@ class Comment(db.Model):
 
 
 class Tags(db.Model):
-
     tag_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     type = db.Column(db.Text)
@@ -196,6 +197,7 @@ class Languages(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     type = db.Column(db.Text)
     links = db.Column(db.Text)
+
     def __init__(self, type, links):
         # self.user_id = user_id
         self.type = type
@@ -243,3 +245,7 @@ class Message(db.Model):
             self.savedresponce = "Just a moment ago!"
         return self.savedresponce
 
+
+class UpdateAccount(FlaskForm):
+    username = StringField('Username', validators=[DataRequired(), Length(min=2, max=20)])
+    submit = SubmitField('Update')

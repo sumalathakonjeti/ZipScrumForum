@@ -1,0 +1,16 @@
+{% extends 'layout.html' %}
+{% block body %}
+<div class="content-section">
+	<fieldset class="form-group">
+		<legend class="border-bottom mb-4">Update Post {{ post.id }}</legend>
+		<div class="form-group">
+			<form action="/action_posted" method="post">
+				<input class="inputbox" size="100" type="text" value="{{post.title}}" name="title"><br>
+				<textarea class="inputbox" rows="25" cols="100"  name="content">{{post.content}}</textarea><br>
+				<input type="hidden" name="post_id" value="{{post.id}}">
+				<input class="inputbox" type="submit" value="Update Post">
+			</form>
+		</div>
+	</fieldset>
+</div>
+{% endblock %}
