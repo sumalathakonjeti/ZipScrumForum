@@ -2,7 +2,7 @@
 {% block body %}
 {{ path|safe}}
 
-
+<h3 align="center"> Search results </h3>
 {%if form%}
 {%for post in form%}
 	<div class="actualpost">
@@ -11,11 +11,12 @@
 			<a href="/viewpost?post={{ post.id }}">{{post.title}}</a>
 			<div class="postposter" {% if post.user.admin %} style="color: red;" {% endif %}>
 				{{ post.user.username }}
-
+			{% if current_user.is_authenticated %}
+			<form action="/action_tag?post={{ post.id }}" method="POST">
+				<input type="submit" id="favorite" value="Favorite">
+			</form>
+			{% endif %}
 			</div>
-<!--			<div class = "subforum">-->
-<!--				{{ post.subforum.title }}-->
-<!--			</div>-->
 			<div class="posttime">
 				{{ post.get_time_string() }}
 			</div>
