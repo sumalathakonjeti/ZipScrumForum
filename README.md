@@ -18,7 +18,7 @@ pip install -r requirements.txt
 
 * Open keys.txt 
 
-Copy and paste the first three lines
+Copy and paste the 3rd line about the secret key lines
 
 Lines 4 and 5 are related to your mysql user and password
 
