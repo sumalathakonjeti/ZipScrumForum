@@ -339,7 +339,7 @@ def add_message(m_sender, m):
 
 def send_reset_email(user):
     token = user.get_reset_token()
-    msg = fm('Password Reset Request', sender="agonzalez1216@gmail.com", recipients=[user.email])
+    msg = fm('Password Reset Request', sender="Zipscrum@zipcode.com", recipients=[user.email])
     msg.body = f'''To reset your password please click the following link:
 {url_for('reset_token', token=token, _external=True)}	
 
