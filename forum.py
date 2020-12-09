@@ -240,8 +240,8 @@ def send_message():
     global messages
     if request.method == 'POST':
         m = request.form['text'].strip()
-        m_sender = request.form['sender'].strip()
-        _msg = add_message(m_sender, m)
+        sender = request.form['sender'].strip()
+        _msg = add_message(sender, m)
         print(type(_msg))
         db.session.commit()
         return redirect(url_for('show_messages'))
@@ -323,10 +323,10 @@ messages = []  # list of Message(s)
 
 @login_required
 @app.route('/add_message', methods=['POST', 'GET'])
-def add_message(m_sender, m):
+def add_message(sender, m):
     global messages
     if m:
-        msg = Message(m_sender, m, datetime.datetime.now())
+        msg = Message(sender, m, datetime.datetime.now())
         print(msg)
         messages.append(msg)
         if len(messages) > MAX_MESSAGES:
