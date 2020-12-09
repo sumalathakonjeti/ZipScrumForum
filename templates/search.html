@@ -1,0 +1,16 @@
+{% extends 'layout.html' %}
+{{ path|safe}}
+{% block body %}
+
+<div class="content-section">
+<form method="POST" action="">
+    <div class="form-group">
+        {{ form.search.label(class="form-control-label") }}:
+		{{ form.search(class="form-control form-control-lg") }}
+    </div>
+
+</form>
+</div>
+
+
+{% endblock %}

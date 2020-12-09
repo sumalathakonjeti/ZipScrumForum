@@ -1,24 +1,32 @@
 from flask import *
-from flask_login import LoginManager, current_user, login_user, logout_user #UPDATED
-from flask_login.utils import login_required #UPDATED
-from flask_login.login_manager import LoginManager #UPDATED
-from forms import *
+from flask_login import LoginManager, current_user, login_user, logout_user  # UPDATED
+from flask_login.utils import login_required  # UPDATED
+from flask_login.login_manager import LoginManager  # UPDATED
 import datetime
+
+from sqlalchemy.orm.session import sessionmaker
+
 from messaging import *
-from app import app, mail
-from database import *
 import config
 import os
 from setup import *
 import setup
-from flask_mail import Message
+from flask_wtf.form import FlaskForm
+from wtforms.fields.core import StringField
+from wtforms.fields.simple import SubmitField
+from sqlalchemy import or_, join, create_engine, engine
+from forms import LoginForm, RegistrationForm, RequestResetForm, ResetPasswordForm
+from flask_mail import Message as fm
 from werkzeug.security import generate_password_hash, check_password_hash
+from database import *
+from app import app, mail
 
 # SETUP
 app.config.from_object(config)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+login_manager.init_app(app)
 
 
 # DATABASE STUFF
@@ -28,6 +36,10 @@ def load_user(user_id):
 
 
 # VIEWS
+def load_user(userid):
+    return User.query.get(userid)
+
+
 @app.route('/')
 def index():
     subforums = Subforum.query.filter(Subforum.parent_id == None).order_by(Subforum.id)
@@ -58,6 +70,8 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user and user.check_password(form.password.data) and user.login_attempts < 3:
+            user.login_attempts = 0
+            db.session.commit()
             login_user(user, remember=form.remember.data)
             return redirect(url_for('index'))
         else:
@@ -83,8 +97,8 @@ def register():
     return render_template('register.html', title='Register', form=form)
 
 
-@login_required
 @app.route('/addpost')
+@login_required
 def addpost():
     subforum_id = int(request.args.get("sub"))
     subforum = Subforum.query.filter(Subforum.id == subforum_id).first()
@@ -110,16 +124,12 @@ def viewpost():
 @app.route('/tags')
 def tag_display():
     fav_post = []
-    save_post = []
     tags = Tags.query.filter(Tags.user_id == current_user.id).order_by(Tags.tag_id.desc()).limit(10)
     for tag in tags:
-        if tag.type == 'favourites':
+        if tag.type == 'favorite':
             fav_post.append(tag.post_info)
-        elif tag.type == 'saved':
-            save_post.append(tag.post_info)
     posts_fav = Post.query.filter(Post.id.in_(fav_post))
-    posts_save = Post.query.filter(Post.id.in_(save_post))
-    return render_template("favourites.html", user=current_user, posts_f=posts_fav, posts_s=posts_save)
+    return render_template("favourites.html", user=current_user, posts_f=posts_fav)
 
 
 @login_required
@@ -179,17 +189,28 @@ def action_logout():
 @app.route('/action_tag', methods=['GET', 'POST'])
 def action_tag():
     post_id = int(request.args.get("post"))
-    print('post_id:' + str(post_id))
-    user = current_user
+    user_now = current_user
     post = Post.query.filter(Post.id == post_id).first()
     if not post:
         return error("That post does not exist!")
-    type = 'favourites'
-    tag = Tags(type, post_id)
-    user.tags.append(tag)
-    db.session.commit()
+    type = 'favorite'
+    fav = Tags.query.filter(Tags.user_id == user_now.id, Tags.post_info == post_id).first()
+    if not fav:
+        tag = Tags(type, post_id)
+        user_now.tags.append(tag)
+        db.session.commit()
     return redirect("/tags")
 
+@login_required
+@app.route('/action_tag_del', methods=['GET', 'POST'])
+def action_tag_del():
+    post_id = int(request.args.get("post2"))
+    user_now = current_user
+    fav = Tags.query.filter(Tags.user_id == user_now.id, Tags.post_info == post_id).first()
+    if fav:
+        db.session.delete(fav)
+        db.session.commit()
+    return redirect("/tags")
 
 def error(errormessage):
     return "<b style=\"color: red;\">" + errormessage + "</b>"
@@ -219,8 +240,8 @@ def send_message():
     global messages
     if request.method == 'POST':
         m = request.form['text'].strip()
-        sender = request.form['sender'].strip()
-        _msg = add_message(sender, m)
+        m_sender = request.form['sender'].strip()
+        _msg = add_message(m_sender, m)
         print(type(_msg))
         db.session.commit()
         return redirect(url_for('show_messages'))
@@ -282,7 +303,6 @@ def action_addlink():
     # return redirect("/")
     return render_template('links.html',message='Link created successfully')
 
-
 def generateLinkPath(subforumid):
     links = []
     subforum = Subforum.query.filter(Subforum.id == subforumid).first()
@@ -303,10 +323,10 @@ messages = []  # list of Message(s)
 
 @login_required
 @app.route('/add_message', methods=['POST', 'GET'])
-def add_message(sender, m):
+def add_message(m_sender, m):
     global messages
     if m:
-        msg = Message(sender, m, datetime.datetime.now())
+        msg = Message(m_sender, m, datetime.datetime.now())
         print(msg)
         messages.append(msg)
         if len(messages) > MAX_MESSAGES:
@@ -319,7 +339,7 @@ def add_message(sender, m):
 
 def send_reset_email(user):
     token = user.get_reset_token()
-    msg = Message('Password Reset Request', sender='ZipcodeScrum@zipcode.com', recipients=[user.email])
+    msg = fm('Password Reset Request', sender="agonzalez1216@gmail.com", recipients=[user.email])
     msg.body = f'''To reset your password please click the following link:
 {url_for('reset_token', token=token, _external=True)}	
 
@@ -358,10 +378,77 @@ def reset_token(token):
         return redirect(url_for('login'))
     return render_template('reset_token.html', title='Reset Password 2', form=form)
 
+@app.route('/admin')
+@login_required
+def admin():
+	form = UpdateAccount()
+	# username = request.form['username']
+	# email = request.form['email']
+	# current_user.username = username
+	return render_template('admin.html')
+
+@app.route('/action_update', methods=['POST'])
+def action_update():
+	username = request.form['username']
+	email = request.form['email']
+	current_user.username = username
+	current_user.email = email
+	db.session.commit()
+	flash('Your account has been updated', 'success')
+	return redirect("/")
+
+@app.route('/update_post', methods=['POST'])
+def update_post():
+	post_id = int(request.args.get("post"))
+	post = Post.query.filter(Post.id == post_id).first()
+	return render_template("update_post.html", post=post)
+
+@app.route('/action_posted', methods=['POST', 'GET'])
+def action_posted():
+	post_id = request.form['post_id']
+	title = request.form['title']
+	content = request.form['content']
+	post = Post.query.filter(Post.id == post_id).first()
+	post.title = title
+	post.content = content
+	db.session.commit()
+	return redirect("/")
+
+@app.route('/action_delete', methods=['POST', 'GET'])
+def action_delete():
+	post_id = int(request.args.get("post"))
+	Post.query.filter(Post.id == post_id).delete()
+	db.session.commit()
+	return redirect("/")
+
 
 db.create_all()
 if not Subforum.query.all():
     init_site()
+
+
+@app.route('/search', methods=['POST', 'GET'])
+def search():
+    search = SearchForm(request.form)
+    if request.method == "POST":
+        return search_results(search)
+
+    return render_template('search.html', form=search)
+
+
+@app.route('/results')
+def search_results(search):
+    post = search.data['search']
+    post = Post.query.outerjoin(Post.comments).filter(or_(Post.title.ilike(f'%{post}%'),
+                                                          Post.content.ilike(f'%{post}%'),
+                                                          Comment.content.ilike(f'%{post}%')))
+    return render_template("results.html", form=post)
+
+
+class SearchForm(FlaskForm):
+    search = StringField('Search')
+    submit = SubmitField('Submit')
+
 
 if __name__ == "__main__":
     # setup.setup()

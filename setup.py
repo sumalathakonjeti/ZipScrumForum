@@ -10,7 +10,6 @@ def init_site():
 	add_subforum("Alumni", "Zip Code alumni networking")
 	add_subforum("Favorite", "Bookmarks")
 
-
 def add_subforum(title, description, parent=None):
 	sub = Subforum(title, description)
 	if parent:

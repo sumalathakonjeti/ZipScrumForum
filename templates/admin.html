@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+	<!--{% if current_user.is_authenticated and current_user.admin %}
+	<h3>Admin Page</h3>
+	{% else %}
+	<h3>You do not have permission to be here! BE GONE</h3>
+	{% endif %}-->
+<div class="loginbox">
+	<h3>Update Account Info</h3>
+	<form action="/action_update" method="POST">
+	<input class="loginelement" type="text" placeholder={{ current_user.username }} name="username"><br>
+	<input class="loginelement" type="text" placeholder={{ current_user.email }} name="email"><br>
+	<input class="loginelement" type="submit" value="Update">
+	</form>
+</div>
+{% endblock %}
