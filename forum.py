@@ -16,7 +16,7 @@ from wtforms.fields.core import StringField
 from wtforms.fields.simple import SubmitField
 from sqlalchemy import or_, join, create_engine, engine
 from forms import LoginForm, RegistrationForm, RequestResetForm, ResetPasswordForm
-from flask_mail import Message
+from flask_mail import Message as fm
 from werkzeug.security import generate_password_hash, check_password_hash
 from database import *
 from app import app, mail
@@ -70,11 +70,14 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user and user.check_password(form.password.data) and user.login_attempts < 3:
+            user.login_attempts = 0
+            db.session.commit()
             login_user(user, remember=form.remember.data)
             return redirect(url_for('index'))
         else:
-            user.login_attempts = user.login_attempts + 1
-            db.session.commit()
+            if user:
+                user.login_attempts = user.login_attempts + 1
+                db.session.commit()
             flash('Login Unsuccessful. Please check email and password', 'danger')
     return render_template('login.html', title='Login', form=form)
 
@@ -89,6 +92,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         flash('Your account has been created! You are now able to log in', 'success')
+        login_user(user)
         return redirect(url_for('index'))
     return render_template('register.html', title='Register', form=form)
 
@@ -335,7 +339,7 @@ def add_message(sender, m):
 
 def send_reset_email(user):
     token = user.get_reset_token()
-    msg = Message('Password Reset Request', sender='ZipcodeScrum@zipcode.com', recipients=[user.email])
+    msg = fm('Password Reset Request', sender="Zipscrum@zipcode.com", recipients=[user.email])
     msg.body = f'''To reset your password please click the following link:
 {url_for('reset_token', token=token, _external=True)}	
 

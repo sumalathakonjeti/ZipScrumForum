@@ -60,6 +60,8 @@ class User(UserMixin, db.Model):
     comments = db.relationship("Comment", backref="user")
     tags = db.relationship("Tags", backref="user")
     message = db.relationship("Message", backref="user")
+    languages = db.relationship("Languages", backref="user")
+
 
     def __init__(self, email, username, password):
         self.email = email
