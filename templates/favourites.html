@@ -1,0 +1,38 @@
+{% extends 'layout.html' %}
+{% block body %}
+
+
+<div class="subforumheader">
+    <div class="subforumheadertitle">
+      <tr> Favorites </tr>
+    </div>
+</div>
+
+
+{% for fav in posts_f %}
+	<div class="actualpost">
+		<div class="actualposttitle">
+			<a href="/viewpost?post={{ fav.id }}">{{fav.title}}</a>
+			<div class="postposter" {% if fav.user.admin %} style="color: red;" {% endif %}>
+			{{ fav.user.username }}
+			</div>
+			<div class="posttime">
+				{{ fav.get_time_string() }}
+			</div>
+		</div>
+		<div class="postcontent">
+			{{fav.content}}
+		</div>
+	</div>
+	{% if current_user.is_authenticated %}
+	<form action="/action_tag_del?post2={{ fav.id }}" method="POST">
+		<input type="submit" id="delete_tag" value="Delete favorite">
+	</form>
+	{% endif %}
+{% endfor %}
+{% endblock %}
+
+
+
+
+

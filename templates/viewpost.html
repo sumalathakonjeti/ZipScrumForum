@@ -7,6 +7,14 @@
 		<a href="/viewpost?post={{ post.id }}">{{post.title}}</a>
 		<div class="postposter" {% if post.user.admin %} style="color: red;" {% endif %}>
 			{{ post.user.username }}
+			{% if current_user.is_authenticated %}
+				<form action="/update_post?post={{ post.id }}" method="POST">
+				   <input type="submit" id="Update" value="Edit Post">
+				</form>
+				<form action="/action_delete?post={{ post.id }}" method="POST">
+					   <input type="submit" id="Delete" value="Delete Post">
+				</form>
+			{% endif %}
 
 		</div>
 		<div class="posttime">
@@ -32,7 +40,7 @@
 	<input type="button" id="displayaddcomment" onclick="toggle()" value="Add a comment">
 
 	{% else %}
-	<a href="/loginform">Login or register to make a comment</a>
+	<a href="/login">Login or register to make a comment</a>
 	{% endif %}
 </div>
 {%if comments%}
@@ -69,6 +77,7 @@ function toggle(){
 	}
 	
 }
+
 </script>
 
 

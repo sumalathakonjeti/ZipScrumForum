@@ -1,15 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<link rel="stylesheet" type="text/css" href="./static/style.css">
 	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='bootstrap.min.css')}}">
-	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css')}}">
+
+<!--	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css')}}">-->
 	<title>{{ config.SITE_NAME }}</title>
+	 <style>
+      .img-container {
+        text-align: center;
+      }
+
+      </style>
 </head>
-<body>
+
+<body style ="background-color:powderblue;">
+		<style>
+		body {
+<!--			background-image: url('https://www.freegreatpicture.com/files/147/18380-hd-color-background-wallpaper.jpg');-->
+
+		}
+		</style>
+	<div class="img-container">
+            <img src="https://pbs.twimg.com/profile_images/743503373438070784/rlUHe5AK_400x400.jpg" alt="Zipcode"  style="width:200px;height:150px;" text-align="center" >
+	</div>
+
+<body style="background-color:#E5E7E9">
+
+
 <div class="page">
 	<div class="header">
 		{% include 'header.html' %}
 	</div>
+<div class="content-section">
+
+</div>
 	{% if errors %}
 	<div class="errors">
 	{% for error in errors %}
@@ -19,9 +44,26 @@
 
 	{% endfor %}
 	</div>
+	<div class="messages">
+		{% with messages = get_flashed_messages(with_categories=true) %}
+		  {% if messages %}
+			{% for category, message in messages %}
+				<div class="alert alert-{{ category }}">
+					{{ message }}
+				</div>
+			{% endfor %}
+		  {% endif %}
+		{% endwith %}
+	</div>
 {% endif %}
 	<div class="content">
 		{% block body %}{% endblock %}
+   	    {% if current_user.is_authenticated %}
+	    <div class="message">
+			{% include 'master.html' %}
+		</div>
+	    {% endif %}
+
 	</div>
 </div>
 </body>

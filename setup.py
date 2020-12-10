@@ -2,11 +2,13 @@ from database import *
 
 import os
 def init_site():
-	admin = add_subforum("Forum", "Announcements")
+	admin = add_subforum("News", "Announcements")
 	add_subforum("Announcements", "View forum announcements here",admin)
-	add_subforum("Bug Reports", "Report bugs with the forum here", admin)
-	add_subforum("General Discussion", "Use this subforum to post anything you want")
-	add_subforum("Coding Discussion", "Discuss other things here")
+	add_subforum("Bugs", "Report bugs with the forum here", admin)
+	add_subforum("Learn to Code", "Share resources, tips, and tricks")
+	add_subforum("Lab Help", "Ask questions related to labs")
+	add_subforum("Alumni", "Zip Code alumni networking")
+	add_subforum("Favorite", "Bookmarks")
 
 def add_subforum(title, description, parent=None):
 	sub = Subforum(title, description)
@@ -24,6 +26,7 @@ def add_subforum(title, description, parent=None):
 	print("adding " + title)
 	db.session.commit()
 	return sub
+
 
 def interpret_site_value(subforumstr):
 	segments = subforumstr.split(':')
