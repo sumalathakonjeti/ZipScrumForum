@@ -1,5 +1,5 @@
 # ZipScrumForum
-This is a forum written in python with Flask. It supports features to allow discussions, including user accounts,comments,messaging, adding favorite bookmarks , and search feature . We worked in a team of 6 to devolp this project.I created bookmark feature , where you can add your favorite bookmark link and also you see the links.
+This is a forum written in python using Flask. This application supports features to allow authorized users to comment, message, add posts, add bookmarks, and search. We worked in a team of 6 to devolp this project. As part of the team I created bookmark feature where users can add bookmarks of their choise to the database and all authorized users will be able to search for the bookmarks. Additionally I created stylings using bootstrap for all team members to use in their pages.
 
 On first run, the default subforums will be created. Although custom subforums are not supported through any user interface, it is possible to modify forum/setup.py to create custom subforums.
 
